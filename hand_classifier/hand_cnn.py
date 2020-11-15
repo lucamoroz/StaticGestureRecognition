@@ -1,25 +1,14 @@
 import numpy as np
-from sklearn.model_selection import train_test_split
-from os.path import normpath, basename
-from glob import glob
 
-import keras
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Conv2D, MaxPooling2D
-from keras import backend as K
-from keras.layers.core import Dense, Activation
-from keras.optimizers import Adam
-from keras.metrics import categorical_crossentropy
-from keras.preprocessing.image import ImageDataGenerator
-from keras.preprocessing import image
-from keras.models import Model
-from keras.applications import imagenet_utils
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras.applications import MobileNet
-from keras.applications.mobilenet import preprocess_input
-import numpy as np
-from keras.optimizers import Adam
+from tensorflow import keras
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import Model
+from tensorflow.keras.applications import imagenet_utils
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.applications.mobilenet import preprocess_input
+from tensorflow.keras.optimizers import Adam
 
 
 class HandCNN:
@@ -117,31 +106,6 @@ class HandCNN:
         img_tensor /= 255.
 
         return self.model.predict(img_tensor)
-
-    def _load_dataset(self, data_path: str):
-        """
-        Loads the dataset from the given folder and returns 2 tuples, the first containing training data and
-        the second validation data.
-        The folder must contain a sub-folder for each hand pose, the sub-folder must contain samples of that pose.
-        """
-
-        poses_path = glob(data_path + "*/")
-        poses = [basename(normpath(p)) for p in poses_path]
-
-        print("Loading dataset for poses: ", poses)
-
-        X = []
-        y = []
-
-        for p in poses_path:
-            pose_name = basename(normpath(p))
-            new_pose_imgs = glob(p + "*.png")
-            X = X + new_pose_imgs
-            y = y + [pose_name for _ in range(len(new_pose_imgs))]
-
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=2)
-
-        return (X_train, y_train), (X_val, y_val)
 
 if __name__ == "__main__":
     load = True
