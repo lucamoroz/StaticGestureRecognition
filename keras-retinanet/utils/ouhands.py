@@ -23,6 +23,6 @@ def prepare_ouhands(dlib_file, images_path, destination_csv):
 
 if __name__ == "__main__":
     prepare_ouhands(
-        "/home/datasets/ml/OUHANDS/dlib/dlib_train.xml",
-        "/home/datasets/ml/OUHANDS/train/hand_data/colour/",
-        "../dataset/ouhands.csv")
+             "/home/datasets/ml/OUHANDS/dlib/dlib_train.xml",
+             "/floyd/input/ouhands/train/hand_data/colour/",
+             "../dataset/ouhands.csv")

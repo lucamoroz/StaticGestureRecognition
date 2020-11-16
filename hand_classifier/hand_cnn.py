@@ -1,5 +1,6 @@
 import numpy as np
 
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.preprocessing import image
@@ -108,13 +109,25 @@ class HandCNN:
         return self.model.predict(img_tensor)
 
 if __name__ == "__main__":
-    load = True
+    print("Devices list: " + str(tf.config.experimental.list_physical_devices('GPU')))
+    tf.debugging.set_log_device_placement(True)
 
-    if load:
-        handCNN = HandCNN(load=True)
+    device_name = tf.test.gpu_device_name()
+    if device_name != '/device:GPU:0':
+        raise SystemError('GPU device not found, device name: ' + device_name)
+    print('Found GPU at: {}'.format(device_name))
 
-    else:
+    with tf.device('/device:GPU:0'):
         handCNN = HandCNN(load=False)
-        handCNN.train("/home/datasets/ml/TinyHands/carlos_r/")
+        handCNN.train("/floyd/input/tinyhands/carlos_r/")
 
-    print(handCNN.predict("/home/datasets/ml/TinyHands/carlos_r/fist/img_CO_01_puno_0000_1_001_045.png"))
+    # load = False
+    #
+    # if load:
+    #     handCNN = HandCNN(load=True)
+    #
+    # else:
+    #     handCNN = HandCNN(load=False)
+    #     handCNN.train("/home/datasets/ml/TinyHands/carlos_r/")
+    #
+    # print(handCNN.predict("/home/datasets/ml/TinyHands/carlos_r/fist/img_CO_01_puno_0000_1_001_045.png"))
