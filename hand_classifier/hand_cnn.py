@@ -1,15 +1,14 @@
 import numpy as np
-
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.models import Model
-from tensorflow.keras.applications import imagenet_utils
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
-from tensorflow.keras.applications import MobileNet
-from tensorflow.keras.applications.mobilenet import preprocess_input
-from tensorflow.keras.optimizers import Adam
+import keras
+from keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing import image
+from keras.models import Model
+from keras.layers import Dense, GlobalAveragePooling2D
+from keras.applications import imagenet_utils, MobileNetV2
+from keras.applications.mobilenet_v2 import preprocess_input
+from keras.optimizers import Adam
+from keras import backend as K
 
 
 class HandCNN:
@@ -31,12 +30,12 @@ class HandCNN:
 
         # Classes inferred by the sub-folders
         data_gen = ImageDataGenerator(
-            preprocessing_function=keras.applications.mobilenet_v2.preprocess_input,
+            preprocessing_function=preprocess_input,
             validation_split=0.2)
 
         if data_augment:
             data_gen = ImageDataGenerator(
-                preprocessing_function=keras.applications.mobilenet_v2.preprocess_input,
+                preprocessing_function=preprocess_input,
                 validation_split=0.2,
                 height_shift_range=0.2,
                 width_shift_range=0.2,
@@ -78,11 +77,11 @@ class HandCNN:
     def get_model(num_classes, learning_rate=0.01):
 
         # Note: input is 224x224x3
-        base_model = keras.applications.MobileNetV2(weights="imagenet", include_top=False)
+        base_model = MobileNetV2(weights="imagenet", include_top=False)
 
         # TODO - try to freeze/not freeze the pretrained part
         for layer in base_model.layers:
-            layer.trainable = False
+            layer.trainable = True
 
         last = base_model.output
         last = GlobalAveragePooling2D()(last)
@@ -95,7 +94,7 @@ class HandCNN:
         model = Model(inputs=base_model.inputs, outputs=predictions)
 
         model.compile(loss=keras.losses.categorical_crossentropy,
-                      optimizer=keras.optimizers.Adam(lr=learning_rate),
+                      optimizer=Adam(lr=learning_rate),
                       metrics=['accuracy'])
 
         return model
@@ -108,26 +107,14 @@ class HandCNN:
 
         return self.model.predict(img_tensor)
 
-if __name__ == "__main__":
-    print("Devices list: " + str(tf.config.experimental.list_physical_devices('GPU')))
-    tf.debugging.set_log_device_placement(True)
 
+if __name__ == "__main__":
+    tf.debugging.set_log_device_placement(True)
     device_name = tf.test.gpu_device_name()
     if device_name != '/device:GPU:0':
         raise SystemError('GPU device not found, device name: ' + device_name)
     print('Found GPU at: {}'.format(device_name))
 
-    with tf.device('/device:GPU:0'):
+    with tf.device('GPU:0'):
         handCNN = HandCNN(load=False)
         handCNN.train("/floyd/input/tinyhands/carlos_r/")
-
-    # load = False
-    #
-    # if load:
-    #     handCNN = HandCNN(load=True)
-    #
-    # else:
-    #     handCNN = HandCNN(load=False)
-    #     handCNN.train("/home/datasets/ml/TinyHands/carlos_r/")
-    #
-    # print(handCNN.predict("/home/datasets/ml/TinyHands/carlos_r/fist/img_CO_01_puno_0000_1_001_045.png"))
