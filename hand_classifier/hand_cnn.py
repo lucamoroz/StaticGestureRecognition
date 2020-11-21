@@ -7,6 +7,7 @@ from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.applications import imagenet_utils, MobileNetV2
 from keras.applications.mobilenet_v2 import preprocess_input
+from keras.losses import categorical_crossentropy
 from keras.optimizers import Adam
 from keras import backend as K
 
@@ -77,7 +78,11 @@ class HandCNN:
     def get_model(num_classes, learning_rate=0.01):
 
         # Note: input is 224x224x3
-        base_model = MobileNetV2(weights="imagenet", include_top=False)
+        # TODO try with input size 64x64
+        base_model = MobileNetV2(
+            alpha=1,                # Keep default number of filters in each layer
+            weights="imagenet",
+            include_top=False)
 
         # TODO - try to freeze/not freeze the pretrained part
         for layer in base_model.layers:
@@ -93,7 +98,7 @@ class HandCNN:
 
         model = Model(inputs=base_model.inputs, outputs=predictions)
 
-        model.compile(loss=keras.losses.categorical_crossentropy,
+        model.compile(loss=categorical_crossentropy,
                       optimizer=Adam(lr=learning_rate),
                       metrics=['accuracy'])
 
