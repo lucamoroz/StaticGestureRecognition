@@ -33,4 +33,4 @@ def prepare_ouhands(ouhands_path, destination_ouhands, destination_csv):
 
 
 if __name__ == "__main__":
-    prepare_ouhands("/home/datasets/ml/OUHANDS", "/floyd/input/ouhands", "ouhands.csv") # /floyd/input/ouhands
+    prepare_ouhands("/home/datasets/ml/OUHANDS", "/home/datasets/ml/OUHANDS", "ouhands.csv") # /floyd/input/ouhands
