@@ -168,12 +168,12 @@ def main(args=None):
             mAP = csv_eval.evaluate(dataset_val, retinanet)
 
         scheduler.step(np.mean(epoch_loss))
-
-        torch.save(retinanet.module, '{}_retinanet_{}.pt'.format(parser.dataset, epoch_num))
+        # Save every 10 epochs
+        if epoch_num % 9 == 0:
+            torch.save(retinanet.module, 'model/{}_retinanet_{}.pt'.format(parser.dataset, epoch_num))
 
     retinanet.eval()
-
-    torch.save(retinanet, 'model_final.pt')
+    torch.save(retinanet, 'model/model_final.pt')
 
 
 if __name__ == '__main__':

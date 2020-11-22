@@ -38,25 +38,26 @@ def main(args=None):
 	if parser.dataset == 'coco':
 		dataset_val = CocoDataset(parser.coco_path, set_name='train2017', transform=transforms.Compose([Normalizer(), Resizer()]))
 	elif parser.dataset == 'csv':
-		dataset_val = CSVDataset(train_file=parser.csv_train, class_list=parser.csv_classes, transform=transforms.Compose([Normalizer(), Resizer()]))
+		dataset_val = CSVDataset(train_file=parser.csv_val, class_list=parser.csv_classes, transform=transforms.Compose([Normalizer(), Resizer()]))
 	else:
 		raise ValueError('Dataset type not understood (must be csv or coco), exiting.')
 
 	sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
 	dataloader_val = DataLoader(dataset_val, num_workers=1, collate_fn=collater, batch_sampler=sampler_val)
 
-	retinanet = torch.load(parser.model)
+	device = torch.device('cpu')
+	retinanet = torch.load(parser.model, map_location=device)
 
-	use_gpu = True
-
-	if use_gpu:
-		if torch.cuda.is_available():
-			retinanet = retinanet.cuda()
-
-	if torch.cuda.is_available():
-		retinanet = torch.nn.DataParallel(retinanet).cuda()
-	else:
-		retinanet = torch.nn.DataParallel(retinanet)
+	# use_gpu = True
+	#
+	# if use_gpu:
+	# 	if torch.cuda.is_available():
+	# 		retinanet = retinanet.cuda()
+	#
+	# if torch.cuda.is_available():
+	# 	retinanet = torch.nn.DataParallel(retinanet).cuda()
+	# else:
+	# 	retinanet = torch.nn.DataParallel(retinanet)
 
 	retinanet.eval()
 
