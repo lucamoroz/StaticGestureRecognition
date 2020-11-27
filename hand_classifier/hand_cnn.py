@@ -19,9 +19,9 @@ class HandCNN:
 
     CONST_MODELS_PATH = "models/"
 
-    def __init__(self, load=False):
-        if load:
-            self.model = keras.models.load_model(self.CONST_MODELS_PATH)
+    def __init__(self, path=None):
+        if path:
+            self.model = keras.models.load_model(path)
 
     def train(self, data_path: str, epochs: int, batch_size: int):
         """ The folder data_path should contain one folder per class, each one containing images of that class."""
@@ -116,23 +116,26 @@ class HandCNN:
         return model
 
     def predict(self, img_path):
-        img = image.load_img(img_path, target_size=(150, 150))
+        img = image.load_img(img_path, target_size=(224, 224))
         img_tensor = image.img_to_array(img)
         img_tensor = np.expand_dims(img_tensor, axis=0)
+
+        # Rescale to range [0, 1] as expected by MobileNet
         img_tensor /= 255.
 
         return self.model.predict(img_tensor)
 
 
 def main():
-    train = True
+    train = False
     if train:
-        handCNN = HandCNN(load=False)
+        handCNN = HandCNN()
         handCNN.train(data_path="../dataset/testdataset/", epochs=2, batch_size=16)
     else:
-        handCNN = HandCNN(load=True)
+        handCNN = HandCNN(path="models/model_final.hdf5")
 
-    print(handCNN.predict("../dataset/testdataset/fist/low_light1_0.jpg"))
+    prediction = handCNN.predict("../dataset/testdataset/fist/low_light1_0.jpg")
+    print("{} -> class: {}".format(prediction, prediction.argmax(axis=-1)))
 
     return
     tf.debugging.set_log_device_placement(True)
