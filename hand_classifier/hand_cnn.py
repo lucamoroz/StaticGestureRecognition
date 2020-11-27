@@ -5,29 +5,31 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
-from keras.applications import imagenet_utils, MobileNetV2
-from keras.applications.mobilenet_v2 import preprocess_input
+from keras.applications import imagenet_utils, MobileNet
+from keras.applications.mobilenet import preprocess_input
 from keras.losses import categorical_crossentropy
 from keras.optimizers import Adam
 from keras import backend as K
+from keras.callbacks import ModelCheckpoint
+from datetime import datetime
+import os
 
 
 class HandCNN:
 
-    CONST_MODELS_PATH = "models"
+    CONST_MODELS_PATH = "models/"
 
     def __init__(self, load=False):
         if load:
             self.model = keras.models.load_model(self.CONST_MODELS_PATH)
 
-    def train(self, data_path: str):
+    def train(self, data_path: str, epochs: int, batch_size: int):
         """ The folder data_path should contain one folder per class, each one containing images of that class."""
 
         img_height = 224
         img_width = 224
-        batch_size = 32
-        epochs = 1
-        data_augment = True
+
+        data_augment = False
 
         # Classes inferred by the sub-folders
         data_gen = ImageDataGenerator(
@@ -64,22 +66,31 @@ class HandCNN:
 
         model = self.get_model(train_generator.num_classes)
 
+        base_path = self.CONST_MODELS_PATH + str(datetime.now()) + "/"
+        os.makedirs(base_path, exist_ok=True)
+        filepath = base_path + "checkpoint-model-{epoch:02d}-{val_accuracy:.2f}.hdf5"
+        checkpoint = \
+            ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=False, mode='auto', period=1)
+
         history = model.fit(
             train_generator,
             steps_per_epoch=train_generator.n // train_generator.batch_size,  # End epoch when all images have been used
             validation_data=validation_generator,
             validation_steps=validation_generator.n // validation_generator.batch_size,
-            epochs=epochs)
+            epochs=epochs,
+            callbacks=[checkpoint])
 
-        model.save(self.CONST_MODELS_PATH)
+        model.save(base_path + "model_final.hdf5")
         self.model = model
+
+        return history
 
     @staticmethod
     def get_model(num_classes, learning_rate=0.01):
 
         # Note: input is 224x224x3
         # TODO try with input size 64x64
-        base_model = MobileNetV2(
+        base_model = MobileNet(
             alpha=1,                # Keep default number of filters in each layer
             weights="imagenet",
             include_top=False)
@@ -113,7 +124,17 @@ class HandCNN:
         return self.model.predict(img_tensor)
 
 
-if __name__ == "__main__":
+def main():
+    train = True
+    if train:
+        handCNN = HandCNN(load=False)
+        handCNN.train(data_path="../dataset/testdataset/", epochs=2, batch_size=16)
+    else:
+        handCNN = HandCNN(load=True)
+
+    print(handCNN.predict("../dataset/testdataset/fist/low_light1_0.jpg"))
+
+    return
     tf.debugging.set_log_device_placement(True)
     device_name = tf.test.gpu_device_name()
     if device_name != '/device:GPU:0':
@@ -123,3 +144,7 @@ if __name__ == "__main__":
     with tf.device('GPU:0'):
         handCNN = HandCNN(load=False)
         handCNN.train("/floyd/input/tinyhands/carlos_r/")
+
+
+if __name__ == '__main__':
+    main()
