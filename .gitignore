@@ -1,4 +1,8 @@
 .idea
+hand_classifier/models
+dataset/dataset
+dataset/testdataset
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

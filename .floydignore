@@ -1,6 +1,5 @@
 
 # Directories and files to ignore when uploading code to floyd
-
 .git
 .eggs
 eggs
@@ -13,3 +12,5 @@ var
 *.swp
 .DS_Store
 venv
+hand_classifier/models/*
+dataset
