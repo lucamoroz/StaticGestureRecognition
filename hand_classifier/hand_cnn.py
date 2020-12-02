@@ -4,9 +4,9 @@ import keras
 from keras.preprocessing.image import ImageDataGenerator
 from keras.preprocessing import image
 from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras.applications import imagenet_utils, MobileNet
-from keras.applications.mobilenet import preprocess_input
+from keras.layers import Dense, GlobalAveragePooling2D, Dropout
+from keras.applications import imagenet_utils, MobileNetV2
+from keras.applications.mobilenet_v2 import preprocess_input
 from keras.losses import categorical_crossentropy
 from keras.optimizers import Adam
 from keras import backend as K
@@ -86,32 +86,31 @@ class HandCNN:
         return history
 
     @staticmethod
-    def get_model(num_classes, learning_rate=0.01):
+    def get_model(num_classes, learning_rate=0.0001):
 
-        # Note: input is 224x224x3
-        # TODO try with input size 64x64
-        base_model = MobileNet(
-            alpha=1,                # Keep default number of filters in each layer
+        # TODO perform parameter tuning on alpha - remember to use float notation (e.g. 1.0, 1.3)
+        #      otherwise pretrained model can't be found
+        base_model = MobileNetV2(
+            # Use default input shape (224x224x3), TODO try with input size 96x96 (min size for mobilenet v2)
+            input_shape=(224, 224, 3),
+            # Width multiplier: controls the number of filters. Available pretrained: 0.35, 0.5, 0.75, 1.0, 1.3, 1.4
+            alpha=1.0,
             weights="imagenet",
             include_top=False)
 
-        # TODO - try to freeze/not freeze the pretrained part
         for layer in base_model.layers:
             layer.trainable = True
 
-        last = base_model.output
-        last = GlobalAveragePooling2D()(last)
-        last = Dense(1024, activation='relu')(last)
-        last = Dense(1024, activation='relu')(last)
-        last = Dense(512, activation='relu')(last)
-
-        predictions = Dense(num_classes, activation='softmax')(last)
+        last = GlobalAveragePooling2D()(base_model.output)
+        last = Dense(256, activation="relu")(last)
+        # last = Dropout(.25)(last) TODO try using dropout if overfitting
+        predictions = Dense(num_classes, activation="softmax")(last)
 
         model = Model(inputs=base_model.inputs, outputs=predictions)
 
         model.compile(loss=categorical_crossentropy,
-                      optimizer=Adam(lr=learning_rate),
-                      metrics=['accuracy'])
+                      optimizer=Adam(lr=learning_rate),  # TODO check SGDR, RMSprop
+                      metrics=["accuracy"])
 
         return model
 
@@ -127,17 +126,6 @@ class HandCNN:
 
 
 def main():
-    train = False
-    if train:
-        handCNN = HandCNN()
-        handCNN.train(data_path="../dataset/testdataset/", epochs=2, batch_size=16)
-    else:
-        handCNN = HandCNN(path="models/model_final.hdf5")
-
-    prediction = handCNN.predict("../dataset/testdataset/fist/low_light1_0.jpg")
-    print("{} -> class: {}".format(prediction, prediction.argmax(axis=-1)))
-
-    return
     tf.debugging.set_log_device_placement(True)
     device_name = tf.test.gpu_device_name()
     if device_name != '/device:GPU:0':
@@ -145,9 +133,44 @@ def main():
     print('Found GPU at: {}'.format(device_name))
 
     with tf.device('GPU:0'):
-        handCNN = HandCNN(load=False)
-        handCNN.train("/floyd/input/tinyhands/carlos_r/")
+        handCNN = HandCNN()
+        history = handCNN.train(data_path="/floyd/input/handposes", epochs=50, batch_size=32)
+        save_history_graphs(history)
 
+    # train = True
+    # if train:
+    #     handCNN = HandCNN()
+    #     history = handCNN.train(data_path="../dataset/testdataset/", epochs=3, batch_size=16)
+    #     save_history_graphs(history)
+    # else:
+    #     handCNN = HandCNN(path="models/model_final.hdf5")
+    #
+    # prediction = handCNN.predict("../dataset/testdataset/fist/low_light1_0.jpg")
+    # print("{} -> class: {}".format(prediction, prediction.argmax(axis=-1)))
+    # return
+
+
+def save_history_graphs(history):
+    import matplotlib.pyplot as plt
+    # list all data in history
+    print(history.history.keys())
+    # summarize history for accuracy
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('accuracy_history.png')
+    plt.clf()
+    # summarize history for loss
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('loss_history.png')
 
 if __name__ == '__main__':
     main()
