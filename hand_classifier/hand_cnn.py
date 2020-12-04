@@ -18,6 +18,7 @@ import os
 class HandCNN:
 
     CONST_MODELS_PATH = "models/"
+    LABELS = ["fist", "palm", "pointer", "spok", "thumb_down", "thumb_up"]
 
     def __init__(self, path=None):
         if path:
@@ -29,6 +30,7 @@ class HandCNN:
         img_height = 224
         img_width = 224
 
+        # TODO train with data augment!!! try cutout, noise addition, horizontal flip?
         data_augment = False
 
         # Classes inferred by the sub-folders
@@ -102,8 +104,10 @@ class HandCNN:
             layer.trainable = True
 
         last = GlobalAveragePooling2D()(base_model.output)
+        # TODO weight decay regularization with param = 0.01?
         last = Dense(256, activation="relu")(last)
-        # last = Dropout(.25)(last) TODO try using dropout if overfitting
+        # TODO try one of these: dropout, batch normalization, SELU
+        # last = Dropout(.25)(last)
         predictions = Dense(num_classes, activation="softmax")(last)
 
         model = Model(inputs=base_model.inputs, outputs=predictions)
@@ -114,8 +118,14 @@ class HandCNN:
 
         return model
 
-    def predict(self, img_path):
+    def predict_img_path(self, img_path):
         img = image.load_img(img_path, target_size=(224, 224))
+        return self.predict_img(img)
+
+    def predict_img(self, pil_img):
+        """ Returns predictions on a PIL image.
+        """
+        img = pil_img.resize((224, 224))
         img_tensor = image.img_to_array(img)
         img_tensor = np.expand_dims(img_tensor, axis=0)
 
@@ -126,7 +136,8 @@ class HandCNN:
 
 
 def main():
-    tf.debugging.set_log_device_placement(True)
+    # TODO add a visualization method (class activation maps)
+    # tf.debugging.set_log_device_placement(True)
     device_name = tf.test.gpu_device_name()
     if device_name != '/device:GPU:0':
         raise SystemError('GPU device not found, device name: ' + device_name)
@@ -134,7 +145,7 @@ def main():
 
     with tf.device('GPU:0'):
         handCNN = HandCNN()
-        history = handCNN.train(data_path="/floyd/input/handposes", epochs=50, batch_size=32)
+        history = handCNN.train(data_path="/floyd/input/handposes", epochs=3, batch_size=32)
         save_history_graphs(history)
 
     # train = True
