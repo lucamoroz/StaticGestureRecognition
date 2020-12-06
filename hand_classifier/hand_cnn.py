@@ -4,13 +4,13 @@ import keras
 from keras.preprocessing.image import ImageDataGenerator
 from keras.preprocessing import image
 from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D, Dropout
+from keras.layers import Dense, GlobalAveragePooling2D, AlphaDropout
 from keras.applications import imagenet_utils, MobileNetV2
 from keras.applications.mobilenet_v2 import preprocess_input
 from keras.losses import categorical_crossentropy
 from keras.optimizers import Adam
 from keras import backend as K
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from datetime import datetime
 import os
 
@@ -23,6 +23,7 @@ class HandCNN:
     def __init__(self, path=None):
         if path:
             self.model = keras.models.load_model(path)
+            print(self.model.summary())
 
     def train(self, data_path: str, epochs: int, batch_size: int):
         """ The folder data_path should contain one folder per class, each one containing images of that class."""
@@ -30,23 +31,22 @@ class HandCNN:
         img_height = 224
         img_width = 224
 
-        # TODO train with data augment!!! try cutout, noise addition, horizontal flip?
-        data_augment = False
+        # TODO add "nothing" data
+        # TODO train with data augment!!! try cutout?
 
         # Classes inferred by the sub-folders
         data_gen = ImageDataGenerator(
             preprocessing_function=preprocess_input,
-            validation_split=0.2)
-
-        if data_augment:
-            data_gen = ImageDataGenerator(
-                preprocessing_function=preprocess_input,
-                validation_split=0.2,
-                height_shift_range=0.2,
-                width_shift_range=0.2,
-                rotation_range=20,
-                brightness_range=[0.2, 1.0],
-                zoom_range=[0.5, 1.0])
+            validation_split=0.2,
+            height_shift_range=0.2,  # Fraction of total height
+            width_shift_range=0.2,
+            rotation_range=15,  # Allow small rotations only as some gestures are orientation-dependant
+            shear_range=10,
+            brightness_range=[0.3, 1.0],
+            channel_shift_range=30,  # Randomly shift one color channel value
+            horizontal_flip=True,  # Ok as long as we use gestures where horizontal orientation doesn't matter
+            vertical_flip=False,
+        )
 
         train_generator = data_gen.flow_from_directory(
             data_path,
@@ -70,9 +70,9 @@ class HandCNN:
 
         base_path = self.CONST_MODELS_PATH + str(datetime.now()) + "/"
         os.makedirs(base_path, exist_ok=True)
-        filepath = base_path + "checkpoint-model-{epoch:02d}-{val_accuracy:.2f}.hdf5"
-        checkpoint = \
-            ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=False, mode='auto', period=1)
+
+        checkpoint_callback = self._get_checkpoint_callback(base_path)
+        early_stop_callback = self._get_early_stop_callback()
 
         history = model.fit(
             train_generator,
@@ -80,7 +80,7 @@ class HandCNN:
             validation_data=validation_generator,
             validation_steps=validation_generator.n // validation_generator.batch_size,
             epochs=epochs,
-            callbacks=[checkpoint])
+            callbacks=[checkpoint_callback, early_stop_callback])
 
         model.save(base_path + "model_final.hdf5")
         self.model = model
@@ -88,14 +88,28 @@ class HandCNN:
         return history
 
     @staticmethod
-    def get_model(num_classes, learning_rate=0.0001):
+    def _get_checkpoint_callback(base_path):
+        filepath = base_path + "checkpoint-model-{epoch:02d}-{val_accuracy:.2f}.hdf5"
+        return ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=False, mode='auto', period=1)
+
+    @staticmethod
+    def _get_early_stop_callback():
+        return EarlyStopping(
+            monitor="val_loss",
+            mode="min",
+            patience=2,  # Stop if validation loss increases for 2 epochs
+            verbose=1
+        )
+
+    @staticmethod
+    def get_model(num_classes, learning_rate=0.001):
 
         # TODO perform parameter tuning on alpha - remember to use float notation (e.g. 1.0, 1.3)
         #      otherwise pretrained model can't be found
         base_model = MobileNetV2(
-            # Use default input shape (224x224x3), TODO try with input size 96x96 (min size for mobilenet v2)
+            # Use default input shape (224x224x3)
             input_shape=(224, 224, 3),
-            # Width multiplier: controls the number of filters. Available pretrained: 0.35, 0.5, 0.75, 1.0, 1.3, 1.4
+            # Width multiplier to controls the number of filters. Available pretrained: 0.35, 0.5, 0.75, 1.0, 1.3, 1.4
             alpha=1.0,
             weights="imagenet",
             include_top=False)
@@ -105,15 +119,17 @@ class HandCNN:
 
         last = GlobalAveragePooling2D()(base_model.output)
         # TODO weight decay regularization with param = 0.01?
-        last = Dense(256, activation="relu")(last)
+        last = Dense(400, kernel_initializer="lecun_normal", activation="selu")(last)
         # TODO try one of these: dropout, batch normalization, SELU
-        # last = Dropout(.25)(last)
+        # AlphaDropout should be used with selu activation - see:
+        # https://mlfromscratch.com/activation-functions-explained/#selu
+        last = AlphaDropout(0.2)(last)
         predictions = Dense(num_classes, activation="softmax")(last)
 
         model = Model(inputs=base_model.inputs, outputs=predictions)
 
         model.compile(loss=categorical_crossentropy,
-                      optimizer=Adam(lr=learning_rate),  # TODO check SGDR, RMSprop
+                      optimizer=Adam(lr=learning_rate),  # TODO check SGDR
                       metrics=["accuracy"])
 
         return model
@@ -137,17 +153,6 @@ class HandCNN:
 
 def main():
     # TODO add a visualization method (class activation maps)
-    # tf.debugging.set_log_device_placement(True)
-    device_name = tf.test.gpu_device_name()
-    if device_name != '/device:GPU:0':
-        raise SystemError('GPU device not found, device name: ' + device_name)
-    print('Found GPU at: {}'.format(device_name))
-
-    with tf.device('GPU:0'):
-        handCNN = HandCNN()
-        history = handCNN.train(data_path="/floyd/input/handposes", epochs=3, batch_size=32)
-        save_history_graphs(history)
-
     # train = True
     # if train:
     #     handCNN = HandCNN()
@@ -159,6 +164,17 @@ def main():
     # prediction = handCNN.predict("../dataset/testdataset/fist/low_light1_0.jpg")
     # print("{} -> class: {}".format(prediction, prediction.argmax(axis=-1)))
     # return
+
+    # tf.debugging.set_log_device_placement(True)
+    device_name = tf.test.gpu_device_name()
+    if device_name != '/device:GPU:0':
+        raise SystemError('GPU device not found, device name: ' + device_name)
+    print('Found GPU at: {}'.format(device_name))
+
+    with tf.device('GPU:0'):
+        handCNN = HandCNN()
+        history = handCNN.train(data_path="/floyd/input/handposes", epochs=15, batch_size=32)
+        save_history_graphs(history)
 
 
 def save_history_graphs(history):
