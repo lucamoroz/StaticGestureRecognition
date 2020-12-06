@@ -119,11 +119,11 @@ class HandCNN:
 
         last = GlobalAveragePooling2D()(base_model.output)
         # TODO weight decay regularization with param = 0.01?
-        last = Dense(400, kernel_initializer="lecun_normal", activation="selu")(last)
+        last = Dense(256, kernel_initializer="lecun_normal", activation="selu")(last)
         # TODO try one of these: dropout, batch normalization, SELU
         # AlphaDropout should be used with selu activation - see:
         # https://mlfromscratch.com/activation-functions-explained/#selu
-        last = AlphaDropout(0.2)(last)
+        # last = AlphaDropout(0.2)(last)
         predictions = Dense(num_classes, activation="softmax")(last)
 
         model = Model(inputs=base_model.inputs, outputs=predictions)
