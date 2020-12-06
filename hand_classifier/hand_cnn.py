@@ -38,12 +38,10 @@ class HandCNN:
         data_gen = ImageDataGenerator(
             preprocessing_function=preprocess_input,
             validation_split=0.2,
-            height_shift_range=0.2,  # Fraction of total height
-            width_shift_range=0.2,
-            rotation_range=15,  # Allow small rotations only as some gestures are orientation-dependant
-            shear_range=10,
-            brightness_range=[0.3, 1.0],
-            channel_shift_range=30,  # Randomly shift one color channel value
+            height_shift_range=0.1,  # Fraction of total height
+            width_shift_range=0.1,
+            rotation_range=10,  # Allow small rotations only as some gestures are orientation-dependant
+            brightness_range=[0.5, 1.0],
             horizontal_flip=True,  # Ok as long as we use gestures where horizontal orientation doesn't matter
             vertical_flip=False,
         )
@@ -97,12 +95,12 @@ class HandCNN:
         return EarlyStopping(
             monitor="val_loss",
             mode="min",
-            patience=2,  # Stop if validation loss increases for 2 epochs
+            patience=5,  # Stop if validation loss increases for 5 epochs
             verbose=1
         )
 
     @staticmethod
-    def get_model(num_classes, learning_rate=0.001):
+    def get_model(num_classes, learning_rate=0.0001):
 
         # TODO perform parameter tuning on alpha - remember to use float notation (e.g. 1.0, 1.3)
         #      otherwise pretrained model can't be found
@@ -119,7 +117,7 @@ class HandCNN:
 
         last = GlobalAveragePooling2D()(base_model.output)
         # TODO weight decay regularization with param = 0.01?
-        last = Dense(256, kernel_initializer="lecun_normal", activation="selu")(last)
+        last = Dense(256, activation="relu")(last)
         # TODO try one of these: dropout, batch normalization, SELU
         # AlphaDropout should be used with selu activation - see:
         # https://mlfromscratch.com/activation-functions-explained/#selu
