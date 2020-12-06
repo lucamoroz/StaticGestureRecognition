@@ -1,6 +1,7 @@
 import cv2
 from hand_classifier.hand_cnn import HandCNN
 from PIL import Image
+import numpy as np
 
 
 def main():
@@ -24,11 +25,9 @@ def main():
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         pil_img = Image.fromarray(img_rgb)
         preds = hand_cnn.predict_img(pil_img=pil_img)
-
-        preds = preds[0].tolist()
-        highest = max(preds)
-        label = HandCNN.LABELS[preds.index(highest)]
-        print(label, " ", highest)
+        label = hand_cnn.LABELS[np.argmax(preds)]
+        prob = np.max(preds)
+        print(label, " ", prob)
 
     cap.release()
     cv2.destroyAllWindows()

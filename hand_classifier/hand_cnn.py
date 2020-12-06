@@ -32,7 +32,6 @@ class HandCNN:
         img_width = 224
 
         # TODO add "nothing" data
-        # TODO train with data augment!!! try cutout?
 
         # Classes inferred by the sub-folders
         data_gen = ImageDataGenerator(
@@ -87,7 +86,7 @@ class HandCNN:
 
     @staticmethod
     def _get_checkpoint_callback(base_path):
-        filepath = base_path + "checkpoint-model-{epoch:02d}-{val_accuracy:.2f}.hdf5"
+        filepath = base_path + "checkpoint-model-{epoch:02d}-{val_accuracy:.4f}.hdf5"
         return ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=False, mode='auto', period=1)
 
     @staticmethod
@@ -95,7 +94,7 @@ class HandCNN:
         return EarlyStopping(
             monitor="val_loss",
             mode="min",
-            patience=5,  # Stop if validation loss increases for 5 epochs
+            patience=2,  # Stop if validation loss increases for 2 epochs
             verbose=1
         )
 
@@ -117,7 +116,7 @@ class HandCNN:
 
         last = GlobalAveragePooling2D()(base_model.output)
         # TODO weight decay regularization with param = 0.01?
-        last = Dense(256, activation="relu")(last)
+        last = Dense(256, kernel_initializer="lecun_normal", activation="selu")(last)
         # TODO try one of these: dropout, batch normalization, SELU
         # AlphaDropout should be used with selu activation - see:
         # https://mlfromscratch.com/activation-functions-explained/#selu
