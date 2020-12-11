@@ -14,8 +14,7 @@ import os
 
 
 class HandCNN:
-    # TODO test that the number of labels has the same prediction size
-    CONST_MODELS_PATH = "models/"
+    # Used to map the predictions to labels
     LABELS = ["fist", "palm", "pointer", "spok", "thumb_down", "thumb_up"]
     IMG_WIDTH = 224
     IMG_HEIGHT = 224
@@ -25,7 +24,15 @@ class HandCNN:
             self.model = keras.models.load_model(path)
             print(self.model.summary())
 
-    def train(self, data_path: str, epochs: int, batch_size: int, learning_rate=0.0001, img_width=IMG_WIDTH, img_height=IMG_HEIGHT):
+    def train(self,
+              data_path: str,
+              epochs: int,
+              batch_size: int,
+              learning_rate=0.0001,
+              img_width=IMG_WIDTH,
+              img_height=IMG_HEIGHT,
+              checkpoints_callback=True,
+              early_stop_callback=True):
 
         train_generator, validation_generator = self._get_generators(data_path, batch_size, img_height, img_width)
 
@@ -34,11 +41,13 @@ class HandCNN:
                       optimizer=Adam(lr=learning_rate),
                       metrics=["accuracy"])
 
-        base_path = self.CONST_MODELS_PATH + str(datetime.now()) + "/"
-        os.makedirs(base_path, exist_ok=True)
+        callbacks = []
+        if checkpoints_callback:
+            os.makedirs("models/checkpoints/", exist_ok=True)
+            callbacks += [self._get_checkpoint_callback("models/checkpoints/")]
 
-        checkpoint_callback = self._get_checkpoint_callback(base_path)
-        early_stop_callback = self._get_early_stop_callback()
+        if early_stop_callback:
+            callbacks += [self._get_early_stop_callback()]
 
         history = model.fit(
             train_generator,
@@ -46,12 +55,15 @@ class HandCNN:
             validation_data=validation_generator,
             validation_steps=validation_generator.n // validation_generator.batch_size,
             epochs=epochs,
-            callbacks=[checkpoint_callback, early_stop_callback])
+            callbacks=callbacks)
 
-        model.save(base_path + "model_final.hdf5")
         self.model = model
 
         return history
+
+    def save_model(self, path="models/", file_name="model_final.hdf5"):
+        os.makedirs(path, exist_ok=True)
+        self.model.save(path + file_name)
 
     @staticmethod
     def _get_generators(data_path: str, batch_size: int, img_height: int, img_width: int):
@@ -141,3 +153,4 @@ class HandCNN:
         img_tensor /= 255.
 
         return self.model.predict(img_tensor)
+

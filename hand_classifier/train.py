@@ -12,11 +12,13 @@ def main(floyd=True):
         with tf.device('GPU:0'):
             hand_cnn = HandCNN()
             history = hand_cnn.train(data_path="/floyd/input/handposes", epochs=15, batch_size=32, learning_rate=0.0001)
+            hand_cnn.save_model()
             save_history_graphs(history)
     else:
         # Train locally
         hand_cnn = HandCNN()
-        history = hand_cnn.train("../dataset/testdataset", batch_size=8, epochs=2, learning_rate=0.01)
+        history = hand_cnn.train("tests/hand_classifier/testdataset/", batch_size=1, epochs=2, learning_rate=0.01)
+        hand_cnn.save_model()
         save_history_graphs(history)
 
 
