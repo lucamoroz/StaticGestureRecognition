@@ -1,17 +1,13 @@
 import warnings
+
 warnings.simplefilter('ignore')
 import pytest
 import numpy as np
 import keras
 from hand_classifier.hand_cnn import HandCNN
 
-parameters = []
 
-for num_classes in [3, 6]:
-    parameters.append((num_classes))
-
-
-@pytest.mark.parametrize("n_classes", parameters)
+@pytest.mark.parametrize("n_classes", [3, 6])
 def test_model(n_classes):
     warnings.simplefilter('ignore')
     inputs = np.zeros((1, 224, 224, 3), dtype=np.float32)
@@ -26,11 +22,16 @@ def test_model(n_classes):
     model.fit(inputs, targets, batch_size=1)
 
 
-def test_predictions():
+@pytest.mark.parametrize("img_path", ["tests/hand_classifier/testdataset/fist/closeup1_0.jpg",
+                                      "tests/hand_classifier/testdataset/spok/closeup1_0.jpg",
+                                      "tests/hand_classifier/testdataset/palm/closeup1_0.jpg"])
+def test_predictions(img_path):
     warnings.simplefilter('ignore')
     hand_cnn = HandCNN()
-    hand_cnn.train("tests/hand_classifier/testdataset/", batch_size=1, epochs=1, learning_rate=0.01, save=False)
-    res = hand_cnn.predict_img_path("tests/hand_classifier/testdataset/fist/low_light1_0.jpg")
+    hand_cnn.LABELS = ["fist", "palm", "pointer", "spok", "thumb_down", "thumb_up"]
+    hand_cnn.train("tests/hand_classifier/testdataset/", batch_size=1, epochs=1, learning_rate=0.01,
+                   checkpoints_callback=False)
+    res = hand_cnn.predict_img_path(img_path)
 
     assert len(res[0]) == len(hand_cnn.LABELS)
     np.testing.assert_almost_equal(np.sum(res[0]), 1, 5)

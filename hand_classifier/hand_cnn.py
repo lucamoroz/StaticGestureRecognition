@@ -143,6 +143,7 @@ class HandCNN:
         return self.predict_img(img)
 
     def predict_img(self, pil_img):
+        # TODO test preprocessing
         """ Returns predictions on a PIL image.
         """
         img = pil_img.resize((self.IMG_WIDTH, self.IMG_HEIGHT))
