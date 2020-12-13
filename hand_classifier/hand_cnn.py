@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 import keras
 from keras.preprocessing.image import ImageDataGenerator
 from keras.preprocessing import image
@@ -9,7 +10,6 @@ from keras.applications.mobilenet_v2 import preprocess_input
 from keras.losses import categorical_crossentropy
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from datetime import datetime
 import os
 
 
@@ -22,7 +22,6 @@ class HandCNN:
     def __init__(self, path=None):
         if path:
             self.model = keras.models.load_model(path)
-            print(self.model.summary())
 
     def train(self,
               data_path: str,
@@ -138,20 +137,25 @@ class HandCNN:
 
         return model
 
-    def predict_img_path(self, img_path):
-        img = image.load_img(img_path, target_size=(self.IMG_HEIGHT, self.IMG_WIDTH))
-        return self.predict_img(img)
+    @staticmethod
+    def preprocess_input(img_tensor, img_height, img_width):
+        img_tensor = tf.image.resize(img_tensor, (img_height, img_width), method=tf.image.ResizeMethod.BILINEAR)
 
-    def predict_img(self, pil_img):
-        # TODO test preprocessing
+        # scale between [-1, 1]
+        img_tensor /= 127.5
+        img_tensor -= 1.
+
+        return img_tensor
+
+    def predict_img_path(self, img_path):
+        img = image.load_img(img_path)
+        img_tensor = image.img_to_array(img)
+        return self.predict_img(img_tensor)
+
+    def predict_img(self, img_tensor):
         """ Returns predictions on a PIL image.
         """
-        img = pil_img.resize((self.IMG_WIDTH, self.IMG_HEIGHT))
-        img_tensor = image.img_to_array(img)
+        img_tensor = self.preprocess_input(img_tensor, self.IMG_HEIGHT, self.IMG_WIDTH)
+
         img_tensor = np.expand_dims(img_tensor, axis=0)
-
-        # Rescale to range [0, 1] as expected by MobileNet
-        img_tensor /= 255.
-
         return self.model.predict(img_tensor)
-

@@ -7,6 +7,19 @@ import keras
 from hand_classifier.hand_cnn import HandCNN
 
 
+@pytest.mark.parametrize("img_shape, target_shape", [((512, 512, 3), (224, 224, 3)), ((820, 430, 3), (96, 96, 3)), ((400, 800, 3), (114, 114, 3))])
+def test_preprocessing(img_shape, target_shape):
+    # Test size and normalization
+    warnings.simplefilter('ignore')
+    input_img = np.random.random_sample(img_shape) * 255
+
+    preprocessed_img = HandCNN.preprocess_input(input_img, target_shape[0], target_shape[1])
+
+    assert (np.asarray(preprocessed_img) < -1).sum() == 0, "preprocessed image contains values below 1"
+    assert (np.asarray(preprocessed_img) > 1).sum() == 0, "preprocessed image contains values above 1"
+    assert preprocessed_img.shape == target_shape, "preprocessed image doesn't have target shape"
+
+
 @pytest.mark.parametrize("n_classes", [3, 6])
 def test_model(n_classes):
     warnings.simplefilter('ignore')

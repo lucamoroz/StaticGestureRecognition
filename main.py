@@ -20,13 +20,13 @@ def main():
         if key & 0xFF == ord('q'):
             break
 
-        # OpenCV follows BGR color convention while PIL follows RGB color convention
         cv2.imshow("Captured", frame)
+        # OpenCV follows BGR color convention
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_img = Image.fromarray(img_rgb)
-        preds = hand_cnn.predict_img(pil_img=pil_img)
-        label = hand_cnn.LABELS[np.argmax(preds)]
-        prob = np.max(preds)
+
+        predictions = hand_cnn.predict_img(img_rgb)
+        label = hand_cnn.LABELS[np.argmax(predictions)]
+        prob = np.max(predictions)
         print(label, " ", prob)
 
     cap.release()
