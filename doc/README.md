@@ -1,4 +1,39 @@
-# Applied Deep Learning
+# Applied Deep Learning - Exercise 2
+The error metric used is the **classification accuracy**.
+
+The target value that I wanted to achieve was at least 96.23%, that is the average recognition accuracy obtained in the paper [Real-Time Hand Gesture Detection and Recognition Using Bag-of-Features and Support Vector Machine Techniques](https://ieeexplore.ieee.org/document/5983442) - see [Exercise 1: project type](#Project-type). 
+
+The achieved value is 99.83%, calculated using a validation set of 4k images (over a dataset of 21k images), see [training info](#Model_training_info) for more information.
+
+Time spent:
+- Dataset collection: 8h
+- Network design & build: 25h
+- Network training & tuning: 20h
+
+
+
+## Exercise 1 updates
+The following changes w.r.t. the initial work plan of exercise 1 applies: 
+
+- I collected and used only my own dataset containing images from the following (hand) classes: fist, palm, pointer, spok, thumb_down, thumb_up. The dataset contains 21k images (about 3.5k images per class).
+- The hand detector (i.e. object detector) was removed from the architecture. The current solution uses a CNN classifier (MobileNetv2).
+
+## Model training info
+The model was trained on 21k images, using a validation split of 20%.
+The training stopped after 3 epochs due to early stopping.
+
+Accuracy history:
+
+![Accuracy history](images/accuracy_history.png)
+
+Loss history:
+
+![Loss history](images/loss_history.png)
+
+To see the training logs, please check the file `model_training_loss.txt`.
+
+
+# Applied Deep Learning - Exercise 1
 
 ### Project topic
 

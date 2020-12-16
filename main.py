@@ -1,6 +1,5 @@
 import cv2
 from hand_classifier.hand_cnn import HandCNN
-from PIL import Image
 import numpy as np
 
 

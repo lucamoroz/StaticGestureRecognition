@@ -20,6 +20,7 @@ class HandCNN:
     IMG_HEIGHT = 224
 
     def __init__(self, path=None):
+        """ Init an empty classifier or load an existing model using the path argument. """
         if path:
             self.model = keras.models.load_model(path)
 
@@ -32,6 +33,10 @@ class HandCNN:
               img_height=IMG_HEIGHT,
               checkpoints_callback=True,
               early_stop_callback=True):
+        """
+        Train a model with the given arguments. The model is set to self.model as instance variable.
+        Returns training history.
+        """
 
         train_generator, validation_generator = self._get_generators(data_path, batch_size, img_height, img_width)
 
@@ -72,7 +77,7 @@ class HandCNN:
             validation_split=0.2,
             height_shift_range=0.1,  # Fraction of total height
             width_shift_range=0.1,
-            rotation_range=10,  # Allow small rotations only as some gestures are orientation-dependant
+            rotation_range=10,  # Allow small rotations only because some gestures are orientation-dependant
             brightness_range=[0.5, 1.0],
             horizontal_flip=True,  # Ok as long as we use gestures where horizontal orientation doesn't matter
             vertical_flip=False,
@@ -139,6 +144,7 @@ class HandCNN:
 
     @staticmethod
     def preprocess_input(img_tensor, img_height, img_width):
+        """ Resizes the input to target height and width and rescale the image content to [-1, 1] """
         img_tensor = tf.image.resize(img_tensor, (img_height, img_width), method=tf.image.ResizeMethod.BILINEAR)
 
         # scale between [-1, 1]
@@ -153,8 +159,7 @@ class HandCNN:
         return self.predict_img(img_tensor)
 
     def predict_img(self, img_tensor):
-        """ Returns predictions on a PIL image.
-        """
+        """ Returns predictions on an image tensor representing an RGB image. """
         img_tensor = self.preprocess_input(img_tensor, self.IMG_HEIGHT, self.IMG_WIDTH)
 
         img_tensor = np.expand_dims(img_tensor, axis=0)
