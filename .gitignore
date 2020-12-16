@@ -1,7 +1,9 @@
 .idea
 hand_classifier/models
 dataset/dataset
-
+.floydexpt
+floyd.yml
+.floydignore
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
