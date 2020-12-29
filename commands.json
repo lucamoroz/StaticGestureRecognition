@@ -1,0 +1,8 @@
+{
+  "fist": "xdotool key Ctrl+shift+p",
+  "palm": "xdotool key super+j",
+  "pointer": "xdotool key KP_Enter",
+  "spok": "xdotool key super+k",
+  "thumb_down": "xdotool key Down",
+  "thumb_up": "xdotool key Up"
+}
