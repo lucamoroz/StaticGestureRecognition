@@ -33,7 +33,10 @@ def main(args=None):
 
 
 def capture_frames(args):
-    cap = cv2.VideoCapture(0)
+    if args.video.isdigit():
+        cap = cv2.VideoCapture(int(args.video))
+    else:
+        cap = cv2.VideoCapture(args.video)
 
     prev = 0
     while cap.isOpened():
@@ -79,6 +82,7 @@ def parse_args(args):
     parser.add_argument("--model", help="path to classifier model", type=str, default="hand_classifier/models/model_final.hdf5")
     parser.add_argument("--debug", help="show frames and recognized gestures.", action="store_true")
     parser.add_argument("--history_len", help="required number of recognitions of the same gesture required to take an action", default=1, type=int)
+    parser.add_argument("--video", help="can be either a path to a video or the id of a local device", default="0")
 
     return parser.parse_args(args)
 
