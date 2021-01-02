@@ -1,12 +1,12 @@
 # StaticGestureRecognition
 Project from Applied Deep Learning 2020 - TUWien
 
-The project consists in a static hand gesture recognizer (implemented) that maps gestures to user-defined commands (to implement).
+The project consists in a static hand gesture recognizer that maps gestures to user-defined commands.
 
 # Requirements
 
 ## Install dependencies
-1. `virtualenv venv`
+1. `virtualenv venv`. Note: the program was tested with python 3.7, you can choose an interpreter using for example `virtualenv -p=/usr/bin/python3.7`
 2. `pip install requirements.txt`
 
 ## Get the model
@@ -17,12 +17,16 @@ The project consists in a static hand gesture recognizer (implemented) that maps
 To run on the webcam:
 `python main.py`
 
-Check the console to see the predicted gesture, press q to exit.
+To run the application in debug mode (and see the video stream and prediction confidence) run `python main.py --debug`.
+
+There are multiple options available, to see all of them run `python main.py --help`. 
+
+# Change commands
+You can change the commands executed by modifying the file commands.json, which associates a command to each gesture.
+
+The commands are passed to the underlying system and executed.
 
 # Test
 From the project root folder, run:
 
 `py.test`
-
-To run tests using multiple workers use:
-`py.test -n [N_WORKERS]`
