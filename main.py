@@ -39,6 +39,9 @@ def capture_frames(args):
         cap = cv2.VideoCapture(args.video)
 
     prev = 0
+
+    print("Running...\n")
+
     while cap.isOpened():
         time_elapsed = time.time() - prev
         ret, frame = cap.read()
@@ -77,12 +80,12 @@ def on_new_frame(frame, args):
 
 def parse_args(args):
     parser = argparse.ArgumentParser(description="Run user-defined commands on gesture recognition.")
-    parser.add_argument("--fps", help="number of processed frames per second", default=-1, type=int)
+    parser.add_argument("--fps", help="number of processed frames per second, -1 to disable", default=3, type=int)
     parser.add_argument("--min_conf", help="minimum gesture prediction confidence in [0,1].", type=float, default=0.98)
     parser.add_argument("--commands", help="path to user defined commands.", type=str, default="commands.json")
     parser.add_argument("--model", help="path to classifier model", type=str, default="hand_classifier/models/model_final.hdf5")
     parser.add_argument("--debug", help="show frames and recognized gestures.", action="store_true")
-    parser.add_argument("--history_len", help="required number of recognitions of the same gesture required to take an action", default=1, type=int)
+    parser.add_argument("--history_len", help="required number of recognitions of the same gesture required to take an action", default=3, type=int)
     parser.add_argument("--video", help="can be either a path to a video or the id of a local device", default="0")
 
     return parser.parse_args(args)
