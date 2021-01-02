@@ -29,18 +29,33 @@ class HandCNN:
               epochs: int,
               batch_size: int,
               learning_rate=0.0001,
+              use_pretrained=False,
               img_width=IMG_WIDTH,
               img_height=IMG_HEIGHT,
               checkpoints_callback=True,
               early_stop_callback=True):
         """
         Train a model with the given arguments. The model is set to self.model as instance variable.
+        Training can be performed on an already trained model by setting use_pretrained to True.
         Returns training history.
         """
 
         train_generator, validation_generator = self._get_generators(data_path, batch_size, img_height, img_width)
 
-        model = self.get_model(train_generator.num_classes, img_height, img_width)
+        if use_pretrained:
+            if not self.model:
+                raise ValueError("use_pretrained can be used only after loading a model")
+            source_model = self.model
+            prev_predictions = source_model.layers[-2].output
+
+            predictions = Dense(train_generator.num_classes, activation="softmax", name="predictions")(prev_predictions)
+            model = Model(inputs=source_model.inputs, outputs=predictions)
+
+            for layer in model.layers[len(model.layers)-2:]:
+                layer.trainable = False
+        else:
+            model = self.get_model(train_generator.num_classes, img_height, img_width)
+
         model.compile(loss=categorical_crossentropy,
                       optimizer=Adam(lr=learning_rate),
                       metrics=["accuracy"])
@@ -79,7 +94,7 @@ class HandCNN:
             width_shift_range=0.1,
             rotation_range=10,  # Allow small rotations only because some gestures are orientation-dependant
             brightness_range=[0.5, 1.0],
-            horizontal_flip=True,  # Ok as long as we use gestures where horizontal orientation doesn't matter
+            horizontal_flip=False,  # Set to true iif horizontal orientation doesn't matter
             vertical_flip=False,
         )
 

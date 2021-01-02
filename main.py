@@ -54,6 +54,7 @@ def capture_frames(args):
 
         if time_elapsed > 1. / args.fps:
             prev = time.time()
+
             on_new_frame(frame, args)
 
     cap.release()

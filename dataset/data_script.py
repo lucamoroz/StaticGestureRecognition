@@ -13,7 +13,6 @@ import cv2
 def main(args=None):
     if not args:
         args = parse_args(sys.argv[1:])
-    print("Running with args:", args)
 
     if args.video.isdigit():
         cap = cv2.VideoCapture(int(args.video))
