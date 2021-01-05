@@ -26,7 +26,16 @@ You can change the commands executed by modifying the file commands.json, which 
 
 The commands are passed to the underlying system and executed.
 
+The default commands use `xdotool key [keys]` that emulates pressing the keys.
+
 # Test
 From the project root folder, run:
 
 `py.test`
+
+# Train on your hands
+There is a dedicated python file that can be used to retrain the classification layer to fir your dataset.
+
+1. Collect your dataset. You can use the script `datset/data_script.py` to quickly add images to a datset, see `dataset/README.md` for more info.
+2. Change the labels of `hand_classifier/HandCNN.LABELS` and `commands.json` according to your dataset classes.
+3. Retrain the classification layer of the pretrained model: `python hand_classifier/retrain_top.py --dataset [PATH_TO_DATASET] --model [PATH_TO_TRAINED_MODEL]` 
