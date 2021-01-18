@@ -1,0 +1,8 @@
+{
+  "fist": "curl http://myledserver/led1",
+  "palm": "curl http://myledserver/led2",
+  "pointer": "curl http://myledserver/led3",
+  "spok": "curl http://myledserver/magic",
+  "thumb_down": "curl http://myledserver/alloff",
+  "thumb_up": "curl http://myledserver/allon"
+}
