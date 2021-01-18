@@ -3,6 +3,8 @@ Project from Applied Deep Learning 2020 - TUWien
 
 The project consists in a static hand gesture recognizer that maps gestures to user-defined commands.
 
+NOTE: to see the deliverables for assignment 2, please refer to the branch "assignment2".
+
 # Requirements
 
 ## Install dependencies
