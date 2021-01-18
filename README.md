@@ -6,8 +6,9 @@ The project consists in a static hand gesture recognizer that maps gestures to u
 # Requirements
 
 ## Install dependencies
-1. `virtualenv venv`. Note: the program was tested with python 3.7, you can choose an interpreter using for example `virtualenv -p=/usr/bin/python3.7`
-2. `pip install requirements.txt`
+1. `virtualenv venv`. Note: the program was tested with python 3.7, you can choose an interpreter using for example `virtualenv venv -p=/usr/bin/python3.7`
+2. Activate virtualenv: `. venv/bin/activate`
+3. `pip install -r requirements.txt`
 
 ## Get the model
 1. Download released [model](https://github.com/lucamoroz/StaticGestureRecognition/releases/download/0.9/model_final.hdf5)
