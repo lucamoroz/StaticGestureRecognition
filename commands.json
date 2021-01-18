@@ -1,8 +1,8 @@
 {
-  "fist": "xdotool key Ctrl+shift+p",
-  "palm": "xdotool key super+j",
-  "pointer": "xdotool key KP_Enter",
-  "spok": "xdotool key super+k",
-  "thumb_down": "xdotool key Down",
-  "thumb_up": "xdotool key Up"
+  "fist": "echo fist command",
+  "palm": "echo palm command",
+  "pointer": "echo pointer command",
+  "spok": "echo spok command",
+  "thumb_down": "echo thumb_down command",
+  "thumb_up": "echo thumb_up command"
 }
